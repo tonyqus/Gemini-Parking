@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# macOS
+.DS_Store
+
+# Playwright temp files
+*.webm
+
+# SQLite database (generated at runtime)
+data/*.db
+data/*.db-journal
