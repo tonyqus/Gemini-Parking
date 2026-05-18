@@ -174,19 +174,20 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
             ) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        val currentOwner = ownerInfo
                         Text("Current Plate Status: $plateStatus", style = MaterialTheme.typography.bodyLarge)
                         Text(
                             "Owner Phone: ${
                                 when {
-                                    ownerInfo == null -> "Not matched"
-                                    ownerInfo.phone.isNullOrBlank() -> "Not provided"
-                                    else -> ownerInfo.phone
+                                    currentOwner == null -> "Not matched"
+                                    currentOwner.phone.isNullOrBlank() -> "Not provided"
+                                    else -> currentOwner.phone
                                 }
                             }",
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Text("门洞号: ${ownerInfo?.building ?: "Not matched"}", style = MaterialTheme.typography.bodyLarge)
-                        Text("Room: ${ownerInfo?.room ?: "Not matched"}", style = MaterialTheme.typography.bodyLarge)
+                        Text("门洞号: ${currentOwner?.building ?: "Not matched"}", style = MaterialTheme.typography.bodyLarge)
+                        Text("Room: ${currentOwner?.room ?: "Not matched"}", style = MaterialTheme.typography.bodyLarge)
                         Text(
                             text = "Operation Status: $operationStatus",
                             color = if (operationStatusIsError) Color.Red else MaterialTheme.colorScheme.onSurface,
