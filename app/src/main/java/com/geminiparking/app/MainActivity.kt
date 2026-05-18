@@ -84,6 +84,7 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
     var plateStatus by remember { mutableStateOf(UiText.waitingForPhoto) }
     var ownerPhone by remember { mutableStateOf<String?>(null) }
     var operationStatus by remember { mutableStateOf(UiText.idle) }
+    var operationStatusIsError by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var showExternalVehicleError by remember { mutableStateOf(false) }
 
@@ -92,22 +93,26 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
         plateStatus = UiText.photoCaptured
         ownerPhone = null
         operationStatus = UiText.recognizing
+        operationStatusIsError = false
 
         scope.launch {
             val phone = service.getPhoneNumberByImage(photo)
             isLoading = false
             if (phone == null) {
                 operationStatus = UiText.temporaryExternal
+                operationStatusIsError = true
                 showExternalVehicleError = true
                 return@launch
             }
 
             ownerPhone = phone
             operationStatus = UiText.dialing
+            operationStatusIsError = false
             val dialIntent = Intent(Intent.ACTION_DIAL).apply {
                 data = android.net.Uri.parse("tel:$phone")
             }
             context.startActivity(dialIntent)
+            operationStatus = UiText.idle
         }
     }
 
@@ -117,6 +122,7 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
             if (result.resultCode != Activity.RESULT_OK) {
                 plateStatus = UiText.photoCanceled
                 operationStatus = UiText.idle
+                operationStatusIsError = false
                 return@rememberLauncherForActivityResult
             }
 
@@ -124,6 +130,7 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
             if (photo == null) {
                 plateStatus = UiText.noPhoto
                 operationStatus = UiText.cameraFailed
+                operationStatusIsError = true
             } else {
                 processPhoto(photo)
             }
@@ -138,6 +145,7 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
                 photoLauncher.launch(cameraIntent)
             } else {
                 operationStatus = UiText.permissionDenied
+                operationStatusIsError = true
             }
         }
     )
@@ -163,7 +171,7 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
                         Text("Owner Phone: ${ownerPhone ?: "Not matched"}", style = MaterialTheme.typography.bodyLarge)
                         Text(
                             text = "Operation Status: $operationStatus",
-                            color = if (operationStatus.startsWith("Error")) Color.Red else MaterialTheme.colorScheme.onSurface,
+                            color = if (operationStatusIsError) Color.Red else MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -175,6 +183,7 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
                     FloatingActionButton(
                         onClick = {
                             operationStatus = UiText.requestingPermission
+                            operationStatusIsError = false
                             permissionLauncher.launch(Manifest.permission.CAMERA)
                         },
                         shape = CircleShape,
