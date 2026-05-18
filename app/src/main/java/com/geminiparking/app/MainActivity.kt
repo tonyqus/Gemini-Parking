@@ -1,6 +1,7 @@
 package com.geminiparking.app
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -82,7 +83,7 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
             val phone = service.getPhoneNumberByImage(photo)
             isLoading = false
             if (phone == null) {
-                operationStatus = "Error: temporary external vehicle!"
+                operationStatus = "Error: temporary external vehicle, contact unavailable!"
                 showExternalVehicleError = true
                 return@launch
             }
@@ -99,6 +100,12 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
     val photoLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
         onResult = { result ->
+            if (result.resultCode != Activity.RESULT_OK) {
+                plateStatus = "Photo capture canceled"
+                operationStatus = "Idle"
+                return@rememberLauncherForActivityResult
+            }
+
             val photo = result.data?.extras?.get("data") as? Bitmap
             if (photo == null) {
                 plateStatus = "No photo captured"

@@ -11,6 +11,8 @@ interface Gemma4ParkingAssistantService {
 class MockGemma4ParkingAssistantService : Gemma4ParkingAssistantService {
     private companion object {
         const val MOCK_INFERENCE_DELAY_MS = 1_800L
+        const val SECOND_DIGIT_MIN = 3
+        const val SECOND_DIGIT_MAX_EXCLUSIVE = 10
     }
 
     override suspend fun getPhoneNumberByImage(image: Bitmap): String? {
@@ -24,7 +26,7 @@ class MockGemma4ParkingAssistantService : Gemma4ParkingAssistantService {
         if (!recognized) return null
 
         val first = "1"
-        val second = Random.nextInt(3, 10).toString()
+        val second = Random.nextInt(SECOND_DIGIT_MIN, SECOND_DIGIT_MAX_EXCLUSIVE).toString()
         val rest = (1..9).joinToString(separator = "") { Random.nextInt(0, 10).toString() }
         return first + second + rest
     }
