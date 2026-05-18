@@ -90,13 +90,6 @@ Key responsibilities:
 - Query and update the resident-vehicle database
 - Expose a RESTful API to both `/app` and `/web`
 
-Example API endpoints:
-- `POST /recognize-plate` — upload a plate image and return the recognized number
-- `GET /vehicles/:plateNumber` — retrieve resident info by plate
-- `POST /records` — create a new vehicle-resident record
-- `PUT /records/:id` — update an existing record
-- `GET /records` — list all registered records
-
 ### `/sql` — Database Scripts
 Contains all database artifacts.
 
