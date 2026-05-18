@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>小区保安管理系统</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    padding-bottom: 70px;
+  }
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* Header */
+  .header {
+    background: #2196F3;
+    color: #fff;
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header .sub { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+
+  /* Content */
+  .content { padding: 16px; max-width: 640px; margin: 0 auto; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 12px;
+  }
+
+  /* Stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2196F3;
+  }
+  .stat-label {
+    font-size: 13px;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  /* Bar chart */
+  .bar-item { margin-bottom: 10px; }
+  .bar-label {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .bar-track {
+    height: 20px;
+    background: #e8eaf6;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.5s ease;
+  }
+  .bar-colors { background: #2196F3; }
+
+  /* Record list */
+  .record-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .record-item:last-child { border-bottom: none; }
+  .record-info { flex: 1; }
+  .record-plate {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2196F3;
+  }
+  .record-meta {
+    font-size: 13px;
+    color: #888;
+    margin-top: 2px;
+  }
+  .record-actions { display: flex; gap: 8px; }
+  .btn-sm {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-edit { background: #e3f2fd; color: #1976d2; }
+  .btn-delete { background: #ffebee; color: #c62828; }
+
+  /* Forms */
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+  }
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    margin-bottom: 14px;
+    -webkit-appearance: none;
+  }
+  input:focus { outline: none; border-color: #2196F3; }
+  .input-row { display: flex; gap: 8px; margin-bottom: 0; }
+  .input-row input { margin-bottom: 0; }
+  .input-row .btn { width: auto; padding: 12px 16px; white-space: nowrap; margin-bottom: 14px; }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    background: #2196F3;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-appearance: none;
+  }
+  .btn:disabled { background: #ccc; cursor: not-allowed; }
+  .btn-danger {
+    background: #fff;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+    margin-top: 10px;
+  }
+
+  .file-input {
+    border: 2px dashed #ccc;
+    padding: 16px;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #666;
+    font-size: 14px;
+  }
+  .file-input.has-file {
+    border-color: #2196F3;
+    color: #2196F3;
+    background: #e3f2fd;
+  }
+
+  .result {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    display: none;
+    font-size: 14px;
+  }
+  .result.success { background: #e8f5e9; color: #2e7d32; display: block; }
+  .result.error { background: #ffebee; color: #c62828; display: block; }
+  .result.info { background: #e3f2fd; color: #1565c0; display: block; }
+
+  .empty { text-align: center; color: #999; padding: 40px; font-size: 14px; }
+
+  /* Search */
+  .search-box { display: flex; gap: 8px; margin-bottom: 12px; }
+  .search-box input { flex: 1; margin-bottom: 0; }
+  .search-box .btn { width: auto; padding: 12px 20px; }
+
+  /* Bottom Tab Nav */
+  .tab-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    display: flex;
+    border-top: 1px solid #e0e0e0;
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 8px 0;
+    text-align: center;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .tab-btn.active { color: #2196F3; }
+  .tab-btn svg { width: 24px; height: 24px; }
+</style>
+</head>
+<body>
+
+<!-- ========== PAGE: Dashboard ========== -->
+<div id="page-dashboard" class="page active">
+  <div class="header">
+    <h1 id="dash-title">小区保安管理系统</h1>
+    <div class="sub">数据看板</div>
+  </div>
+  <div class="content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-today">0</div>
+        <div class="stat-label">今日录入</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-label">总记录数</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">楼栋分布</div>
+      <div id="building-chart"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">最近记录</div>
+      <div id="recent-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PAGE: Owner List ========== -->
+<div id="page-list" class="page">
+  <div class="header">
+    <h1>信息列表</h1>
+    <div class="sub">车辆登记记录</div>
+  </div>
+  <div class="content">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="搜索车牌号...">
+      <button class="btn" onclick="loadRecords()">搜索</button>
+    </div>
+    <div class="card">
+      <div id="record-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PAGE: Add/Edit Form ========== -->
+<div id="page-form" class="page">
+  <div class="header">
+    <h1 id="form-title">信息录入</h1>
+    <div class="sub" id="form-sub">新增车辆登记</div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <label>车牌号</label>
+      <div class="input-row">
+        <input type="text" id="form-plate" placeholder="如：京A12345" style="flex:1;">
+        <label class="file-input" id="plateFileLabel" style="width:auto;padding:12px 14px;" onclick="document.getElementById('plateFile').click()">
+          拍照
+        </label>
+        <input type="file" id="plateFile" accept="image/*" capture="environment" style="display:none" onchange="recognizePlate(this)">
+      </div>
+
+      <label>联系电话</label>
+      <input type="tel" id="form-phone" placeholder="如：13800138000">
+
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;">
+          <label>楼栋</label>
+          <input type="text" id="form-building" placeholder="如：1号楼">
+        </div>
+        <div style="flex:1;">
+          <label>房间号</label>
+          <input type="text" id="form-room" placeholder="如：101室">
+        </div>
+      </div>
+
+      <input type="hidden" id="form-id">
+      <button class="btn" id="form-save-btn" onclick="saveRecord()">保存</button>
+      <button class="btn btn-danger" id="form-delete-btn" onclick="deleteCurrentRecord()" style="display:none;">删除</button>
+      <div id="form-result" class="result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PAGE: Settings ========== -->
+<div id="page-settings" class="page">
+  <div class="header">
+    <h1>基础设置</h1>
+    <div class="sub">系统配置</div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <label>小区名称</label>
+      <input type="text" id="setting-name" placeholder="如：阳光花园小区">
+      <label>管理员电话</label>
+      <input type="tel" id="setting-phone" placeholder="如：13800138000">
+      <button class="btn" onclick="saveSettings()">保存设置</button>
+      <div id="settings-result" class="result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Bottom Tab Nav ========== -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>看板</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('list')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>列表</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('form')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span>录入</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>设置</span>
+  </button>
+</div>
+
+<script>
+const API = '';
+
+let currentEditId = null;
+
+function switchTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const idx = ['dashboard','list','form','settings'].indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'list') loadRecords();
+  if (name === 'form') resetForm();
+  if (name === 'settings') loadSettings();
+}
+
+function showResult(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'result ' + type;
+  setTimeout(() => { el.className = 'result'; el.textContent = ''; }, 4000);
+}
+
+/* ---------- Dashboard ---------- */
+async function loadDashboard() {
+  try {
+    const res = await fetch(API + '/api/dashboard');
+    const data = await res.json();
+    document.getElementById('stat-today').textContent = data.today_count || 0;
+    document.getElementById('stat-total').textContent = data.total_count || 0;
+    if (data.community_name) {
+      document.getElementById('dash-title').textContent = data.community_name;
+    }
+
+    // Building chart
+    const chart = document.getElementById('building-chart');
+    const buildings = data.building_distribution || {};
+    const entries = Object.entries(buildings).sort((a,b) => b[1] - a[1]);
+    const max = entries.length ? Math.max(...entries.map(e => e[1])) : 1;
+    const colors = ['#2196F3','#4CAF50','#FF9800','#9C27B0','#F44336','#00BCD4','#795548','#607D8B'];
+    if (entries.length === 0) {
+      chart.innerHTML = '<div class="empty">暂无数据</div>';
+    } else {
+      chart.innerHTML = entries.map((e, i) => `
+        <div class="bar-item">
+          <div class="bar-label"><span>${e[0]}</span><span>${e[1]}辆</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(e[1]/max*100)}%;background:${colors[i % colors.length]}"></div></div>
+        </div>
+      `).join('');
+    }
+
+    // Recent records
+    const recent = document.getElementById('recent-list');
+    const recs = data.recent_records || [];
+    if (recs.length === 0) {
+      recent.innerHTML = '<div class="empty">暂无记录</div>';
+    } else {
+      recent.innerHTML = recs.map(r => `
+        <div class="record-item">
+          <div class="record-info">
+            <div class="record-plate">${r.plate_number}</div>
+            <div class="record-meta">${r.building} ${r.room} · ${r.phone}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (e) {
+    console.error('dashboard error', e);
+  }
+}
+
+/* ---------- List ---------- */
+async function loadRecords() {
+  const q = document.getElementById('search-input').value.trim();
+  const list = document.getElementById('record-list');
+  list.innerHTML = '<div class="empty">加载中...</div>';
+  try {
+    const url = q ? API + '/api/records?q=' + encodeURIComponent(q) : API + '/api/records';
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.length === 0) {
+      list.innerHTML = '<div class="empty">暂无记录</div>';
+      return;
+    }
+    list.innerHTML = data.map(r => `
+      <div class="record-item">
+        <div class="record-info">
+          <div class="record-plate">${r.plate_number}</div>
+          <div class="record-meta">${r.phone} · ${r.building} ${r.room}</div>
+        </div>
+        <div class="record-actions">
+          <button class="btn-sm btn-edit" onclick="editRecord(${r.id})">编辑</button>
+          <button class="btn-sm btn-delete" onclick="deleteRecord(${r.id})">删除</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    list.innerHTML = '<div class="empty">加载失败</div>';
+  }
+}
+
+function editRecord(id) {
+  const list = document.getElementById('record-list');
+  const items = list.querySelectorAll('.record-item');
+  // Find record data from DOM or refetch
+  fetch(API + '/api/records?q=')
+    .then(r => r.json())
+    .then(data => {
+      const rec = data.find(x => x.id === id);
+      if (!rec) return;
+      currentEditId = id;
+      document.getElementById('form-id').value = id;
+      document.getElementById('form-plate').value = rec.plate_number;
+      document.getElementById('form-phone').value = rec.phone;
+      document.getElementById('form-building').value = rec.building;
+      document.getElementById('form-room').value = rec.room;
+      document.getElementById('form-title').textContent = '编辑信息';
+      document.getElementById('form-sub').textContent = '修改车辆登记';
+      document.getElementById('form-delete-btn').style.display = 'block';
+      switchTab('form');
+    });
+}
+
+async function deleteRecord(id) {
+  if (!confirm('确定删除此记录？')) return;
+  try {
+    await fetch(API + '/api/records/' + id, { method: 'DELETE' });
+    loadRecords();
+  } catch (e) {
+    alert('删除失败');
+  }
+}
+
+/* ---------- Form ---------- */
+function resetForm() {
+  currentEditId = null;
+  document.getElementById('form-id').value = '';
+  document.getElementById('form-plate').value = '';
+  document.getElementById('form-phone').value = '';
+  document.getElementById('form-building').value = '';
+  document.getElementById('form-room').value = '';
+  document.getElementById('form-title').textContent = '信息录入';
+  document.getElementById('form-sub').textContent = '新增车辆登记';
+  document.getElementById('form-delete-btn').style.display = 'none';
+  document.getElementById('plateFileLabel').textContent = '拍照';
+  document.getElementById('plateFileLabel').classList.remove('has-file');
+  document.getElementById('form-result').className = 'result';
+}
+
+async function recognizePlate(input) {
+  const label = document.getElementById('plateFileLabel');
+  if (!input.files[0]) return;
+  label.textContent = '识别中...';
+  label.classList.add('has-file');
+  const form = new FormData();
+  form.append('file', input.files[0]);
+  try {
+    const res = await fetch(API + '/api/recognize', { method: 'POST', body: form });
+    const data = await res.json();
+    document.getElementById('form-plate').value = data.plate_number || '';
+    label.textContent = data.plate_number ? '识别成功' : '未识别';
+    showResult('form-result', data.plate_number ? '车牌识别完成' : '未能识别车牌，请手动输入', data.plate_number ? 'info' : 'error');
+  } catch (e) {
+    label.textContent = '识别失败';
+    showResult('form-result', '识别失败：' + e.message, 'error');
+  }
+}
+
+async function saveRecord() {
+  const plate = document.getElementById('form-plate').value.trim();
+  const phone = document.getElementById('form-phone').value.trim();
+  const building = document.getElementById('form-building').value.trim();
+  const room = document.getElementById('form-room').value.trim();
+  if (!plate || !phone || !building || !room) {
+    showResult('form-result', '请填写完整信息', 'error');
+    return;
+  }
+  const payload = { plate_number: plate, phone, building, room };
+  try {
+    let res;
+    if (currentEditId) {
+      res = await fetch(API + '/api/records/' + currentEditId, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      res = await fetch(API + '/api/records', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
+    await res.json();
+    showResult('form-result', currentEditId ? '修改成功！' : '保存成功！', 'success');
+    setTimeout(() => switchTab('list'), 800);
+  } catch (e) {
+    showResult('form-result', '保存失败：' + e.message, 'error');
+  }
+}
+
+async function deleteCurrentRecord() {
+  if (!currentEditId) return;
+  if (!confirm('确定删除此记录？')) return;
+  try {
+    await fetch(API + '/api/records/' + currentEditId, { method: 'DELETE' });
+    showResult('form-result', '删除成功', 'success');
+    setTimeout(() => switchTab('list'), 800);
+  } catch (e) {
+    showResult('form-result', '删除失败：' + e.message, 'error');
+  }
+}
+
+/* ---------- Settings ---------- */
+async function loadSettings() {
+  try {
+    const res = await fetch(API + '/api/settings');
+    const data = await res.json();
+    document.getElementById('setting-name').value = data.community_name || '';
+    document.getElementById('setting-phone').value = data.admin_phone || '';
+  } catch (e) {
+    console.error('settings error', e);
+  }
+}
+
+async function saveSettings() {
+  const name = document.getElementById('setting-name').value.trim();
+  const phone = document.getElementById('setting-phone').value.trim();
+  try {
+    await fetch(API + '/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ community_name: name, admin_phone: phone })
+    });
+    showResult('settings-result', '设置已保存', 'success');
+  } catch (e) {
+    showResult('settings-result', '保存失败：' + e.message, 'error');
+  }
+}
+
+// Init
+loadDashboard();
+</script>
+</body>
+</html>
