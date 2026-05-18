@@ -226,3 +226,7 @@ __marimo__/
 # SQLite database (generated at runtime)
 data/*.db
 data/*.db-journal
+
+# Android/Gradle build artifacts
+app/.gradle/
+app/build/
