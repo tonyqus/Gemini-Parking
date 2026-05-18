@@ -290,8 +290,8 @@
         <input type="file" id="plateFile" accept="image/*" capture="environment" style="display:none" onchange="recognizePlate(this)">
       </div>
 
-      <label>联系电话</label>
-      <input type="tel" id="form-phone" placeholder="如：13800138000">
+      <label>联系电话（可选）</label>
+      <input type="tel" id="form-phone" placeholder="如：13800138000，不填则需要按门铃联系">
 
       <div style="display:flex;gap:12px;">
         <div style="flex:1;">
@@ -413,7 +413,7 @@ async function loadDashboard() {
         <div class="record-item">
           <div class="record-info">
             <div class="record-plate">${r.plate_number}</div>
-            <div class="record-meta">${r.building} ${r.room} · ${r.phone}</div>
+            <div class="record-meta">${r.building} ${r.room} · ${r.phone || '未留电话'}</div>
           </div>
         </div>
       `).join('');
@@ -440,7 +440,7 @@ async function loadRecords() {
       <div class="record-item">
         <div class="record-info">
           <div class="record-plate">${r.plate_number}</div>
-          <div class="record-meta">${r.phone} · ${r.building} ${r.room}</div>
+          <div class="record-meta">${r.phone || '未留电话'} · ${r.building} ${r.room}</div>
         </div>
         <div class="record-actions">
           <button class="btn-sm btn-edit" onclick="editRecord(${r.id})">编辑</button>
@@ -525,8 +525,8 @@ async function saveRecord() {
   const phone = document.getElementById('form-phone').value.trim();
   const building = document.getElementById('form-building').value.trim();
   const room = document.getElementById('form-room').value.trim();
-  if (!plate || !phone || !building || !room) {
-    showResult('form-result', '请填写完整信息', 'error');
+  if (!plate || !building || !room) {
+    showResult('form-result', '请填写车牌、门洞和房间号', 'error');
     return;
   }
   const payload = { plate_number: plate, phone, building, room };

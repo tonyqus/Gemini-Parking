@@ -55,6 +55,7 @@ private object UiText {
     const val photoCaptured = "Photo captured"
     const val recognizing = "Recognizing..."
     const val dialing = "Dialing..."
+    const val useDoorbell = "No phone on file, please use the doorbell."
     const val requestingPermission = "Requesting camera permission..."
     const val permissionDenied = "Error: camera permission denied"
     const val photoCanceled = "Photo capture canceled"
@@ -82,7 +83,7 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
     val scope = rememberCoroutineScope()
 
     var plateStatus by remember { mutableStateOf(UiText.waitingForPhoto) }
-    var ownerPhone by remember { mutableStateOf<String?>(null) }
+    var ownerInfo by remember { mutableStateOf<OwnerLookupResult?>(null) }
     var operationStatus by remember { mutableStateOf(UiText.idle) }
     var operationStatusIsError by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
@@ -91,25 +92,31 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
     fun processPhoto(photo: Bitmap) {
         isLoading = true
         plateStatus = UiText.photoCaptured
-        ownerPhone = null
+        ownerInfo = null
         operationStatus = UiText.recognizing
         operationStatusIsError = false
 
         scope.launch {
-            val phone = service.getPhoneNumberByImage(photo)
+            val match = service.getOwnerInfoByImage(photo)
             isLoading = false
-            if (phone == null) {
+            if (match == null) {
                 operationStatus = UiText.temporaryExternal
                 operationStatusIsError = true
                 showExternalVehicleError = true
                 return@launch
             }
 
-            ownerPhone = phone
+            ownerInfo = match
+            if (match.phone.isNullOrBlank()) {
+                operationStatus = UiText.useDoorbell
+                operationStatusIsError = false
+                return@launch
+            }
+
             operationStatus = UiText.dialing
             operationStatusIsError = false
             val dialIntent = Intent(Intent.ACTION_DIAL).apply {
-                data = android.net.Uri.parse("tel:$phone")
+                data = android.net.Uri.parse("tel:${match.phone}")
             }
             context.startActivity(dialIntent)
             operationStatus = UiText.idle
@@ -167,8 +174,20 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
             ) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        val currentOwner = ownerInfo
                         Text("Current Plate Status: $plateStatus", style = MaterialTheme.typography.bodyLarge)
-                        Text("Owner Phone: ${ownerPhone ?: "Not matched"}", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "Owner Phone: ${
+                                when {
+                                    currentOwner == null -> "Not matched"
+                                    currentOwner.phone.isNullOrBlank() -> "Not provided"
+                                    else -> currentOwner.phone
+                                }
+                            }",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text("门洞号: ${currentOwner?.building ?: "未匹配"}", style = MaterialTheme.typography.bodyLarge)
+                        Text("房间号: ${currentOwner?.room ?: "未匹配"}", style = MaterialTheme.typography.bodyLarge)
                         Text(
                             text = "Operation Status: $operationStatus",
                             color = if (operationStatusIsError) Color.Red else MaterialTheme.colorScheme.onSurface,
