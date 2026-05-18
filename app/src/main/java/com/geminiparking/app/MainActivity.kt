@@ -179,8 +179,8 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
                             "Owner Phone: ${
                                 when {
                                     ownerInfo == null -> "Not matched"
-                                    ownerInfo?.phone.isNullOrBlank() -> "Not provided"
-                                    else -> ownerInfo?.phone
+                                    ownerInfo.phone.isNullOrBlank() -> "Not provided"
+                                    else -> ownerInfo.phone
                                 }
                             }",
                             style = MaterialTheme.typography.bodyLarge
