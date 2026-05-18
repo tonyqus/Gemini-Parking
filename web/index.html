@@ -388,8 +388,8 @@ async function loadDashboard() {
 
     // Building chart
     const chart = document.getElementById('building-chart');
-    const buildings = data.building_distribution || {};
-    const entries = Object.entries(buildings).sort((a,b) => b[1] - a[1]);
+    const stats = data.building_stats || [];
+    const entries = stats.map(s => [s.building, s.count]).sort((a,b) => b[1] - a[1]);
     const max = entries.length ? Math.max(...entries.map(e => e[1])) : 1;
     const colors = ['#2196F3','#4CAF50','#FF9800','#9C27B0','#F44336','#00BCD4','#795548','#607D8B'];
     if (entries.length === 0) {
