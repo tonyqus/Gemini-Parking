@@ -49,6 +49,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
+private object UiText {
+    const val waitingForPhoto = "Waiting for photo..."
+    const val idle = "Idle"
+    const val photoCaptured = "Photo captured"
+    const val recognizing = "Recognizing..."
+    const val dialing = "Dialing..."
+    const val requestingPermission = "Requesting camera permission..."
+    const val permissionDenied = "Error: camera permission denied"
+    const val photoCanceled = "Photo capture canceled"
+    const val noPhoto = "No photo captured"
+    const val cameraFailed = "Error: camera capture failed"
+    const val temporaryExternal = "Error: temporary external vehicle, contact unavailable!"
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,29 +81,29 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var plateStatus by remember { mutableStateOf("Waiting for photo...") }
+    var plateStatus by remember { mutableStateOf(UiText.waitingForPhoto) }
     var ownerPhone by remember { mutableStateOf<String?>(null) }
-    var operationStatus by remember { mutableStateOf("Idle") }
+    var operationStatus by remember { mutableStateOf(UiText.idle) }
     var isLoading by remember { mutableStateOf(false) }
     var showExternalVehicleError by remember { mutableStateOf(false) }
 
     fun processPhoto(photo: Bitmap) {
         isLoading = true
-        plateStatus = "Photo captured"
+        plateStatus = UiText.photoCaptured
         ownerPhone = null
-        operationStatus = "Recognizing..."
+        operationStatus = UiText.recognizing
 
         scope.launch {
             val phone = service.getPhoneNumberByImage(photo)
             isLoading = false
             if (phone == null) {
-                operationStatus = "Error: temporary external vehicle, contact unavailable!"
+                operationStatus = UiText.temporaryExternal
                 showExternalVehicleError = true
                 return@launch
             }
 
             ownerPhone = phone
-            operationStatus = "Dialing..."
+            operationStatus = UiText.dialing
             val dialIntent = Intent(Intent.ACTION_DIAL).apply {
                 data = android.net.Uri.parse("tel:$phone")
             }
@@ -101,15 +115,15 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
         contract = ActivityResultContracts.StartActivityForResult(),
         onResult = { result ->
             if (result.resultCode != Activity.RESULT_OK) {
-                plateStatus = "Photo capture canceled"
-                operationStatus = "Idle"
+                plateStatus = UiText.photoCanceled
+                operationStatus = UiText.idle
                 return@rememberLauncherForActivityResult
             }
 
             val photo = result.data?.extras?.get("data") as? Bitmap
             if (photo == null) {
-                plateStatus = "No photo captured"
-                operationStatus = "Error: camera capture failed"
+                plateStatus = UiText.noPhoto
+                operationStatus = UiText.cameraFailed
             } else {
                 processPhoto(photo)
             }
@@ -123,7 +137,7 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
                 val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                 photoLauncher.launch(cameraIntent)
             } else {
-                operationStatus = "Error: camera permission denied"
+                operationStatus = UiText.permissionDenied
             }
         }
     )
@@ -160,7 +174,7 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     FloatingActionButton(
                         onClick = {
-                            operationStatus = "Requesting camera permission..."
+                            operationStatus = UiText.requestingPermission
                             permissionLauncher.launch(Manifest.permission.CAMERA)
                         },
                         shape = CircleShape,
