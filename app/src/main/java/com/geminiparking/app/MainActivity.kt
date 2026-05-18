@@ -186,8 +186,8 @@ private fun ParkingAssistantScreen(service: Gemma4ParkingAssistantService) {
                             }",
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Text("门洞号: ${currentOwner?.building ?: "Not matched"}", style = MaterialTheme.typography.bodyLarge)
-                        Text("Room: ${currentOwner?.room ?: "Not matched"}", style = MaterialTheme.typography.bodyLarge)
+                        Text("门洞号: ${currentOwner?.building ?: "未匹配"}", style = MaterialTheme.typography.bodyLarge)
+                        Text("房间号: ${currentOwner?.room ?: "未匹配"}", style = MaterialTheme.typography.bodyLarge)
                         Text(
                             text = "Operation Status: $operationStatus",
                             color = if (operationStatusIsError) Color.Red else MaterialTheme.colorScheme.onSurface,
